@@ -724,9 +724,102 @@ GRAPHQL_PLAYGROUND=true|false
 ```
 
 ### Configuration Management
-- Use environment-specific config files
+
+#### Development Environment (.env file)
+- Use a `.env` file for local development environment variables
+- Load environment variables using `dotenv` package
+- **NEVER commit `.env` files to version control** - add to `.gitignore`
+- Provide a `.env.example` file with placeholder values
+
+```bash
+# .env (local development only - DO NOT COMMIT)
+NODE_ENV=development
+PORT=4000
+MONGODB_URI=mongodb://username:password@localhost:27017/your-app-dev
+JWT_SECRET=your-local-jwt-secret-min-32-chars
+REDIS_URL=redis://localhost:6379
+ALLOWED_ORIGINS=http://localhost:3000
+GRAPHQL_INTROSPECTION=true
+GRAPHQL_PLAYGROUND=true
+```
+
+```bash
+# .env.example (committed to version control)
+NODE_ENV=development
+PORT=4000
+MONGODB_URI=mongodb://username:password@localhost:27017/your-app-dev
+JWT_SECRET=your-jwt-secret-here
+REDIS_URL=redis://localhost:6379
+ALLOWED_ORIGINS=http://localhost:3000
+GRAPHQL_INTROSPECTION=true
+GRAPHQL_PLAYGROUND=true
+```
+
+#### Environment Variable Loading
+```typescript
+// src/config/environment.ts
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file in development
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
+
+interface Config {
+  nodeEnv: string;
+  port: number;
+  mongodbUri: string;
+  jwtSecret: string;
+  redisUrl: string;
+  allowedOrigins: string[];
+  graphql: {
+    introspection: boolean;
+    playground: boolean;
+  };
+}
+
+export const config: Config = {
+  nodeEnv: process.env.NODE_ENV || 'development',
+  port: parseInt(process.env.PORT || '4000', 10),
+  mongodbUri: process.env.MONGODB_URI || '',
+  jwtSecret: process.env.JWT_SECRET || '',
+  redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+  allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  graphql: {
+    introspection: process.env.GRAPHQL_INTROSPECTION === 'true',
+    playground: process.env.GRAPHQL_PLAYGROUND === 'true',
+  },
+};
+
+// Validate required environment variables
+const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+}
+```
+
+#### .gitignore Requirements
+```bash
+# .gitignore
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Keep example file
+!.env.example
+```
+
+#### Best Practices
+- Use environment-specific config files for different deployment environments
 - Validate required environment variables on startup
 - Use type-safe configuration objects
+- Provide sensible defaults for optional variables
+- Document all environment variables in `.env.example`
 
 ## Documentation
 
