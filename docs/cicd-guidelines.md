@@ -190,29 +190,6 @@ jobs:
             ${{ matrix.component }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: [test-backend, test-frontend]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
 ```
 
 ## Release Workflow
@@ -1054,11 +1031,6 @@ Configure Slack webhook for notifications:
 - Use semantic versioning (e.g., `v1.0.0`, `v1.0.1-beta.1`)
 - Create tags on the `main` branch only
 - Include release notes in tag descriptions
-
-### Security Scanning
-- All workflows include Trivy security scanning
-- Upload scan results to GitHub Security tab
-- Block deployments if critical vulnerabilities found
 
 ### Resource Management
 - Use GitHub Actions cache for dependencies
